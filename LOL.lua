@@ -111,27 +111,6 @@ local function createOptionHolder(holderTitle, parent, parentTable, subHolder)
 	
 	if not subHolder then
 		library:Create("UIPadding", {Parent = parentTable.content})
-		
-		-- Footer text with dynamic positioning
-		local footerText = library:Create("TextLabel", {
-			Position = UDim2.new(0, 20 + (250 * (parentTable.position or 0)), 0, 0),
-			Size = UDim2.new(0, 230, 0, 18),
-			BackgroundTransparency = 1,
-			Text = "AntiGod UI",
-			TextSize = 12,
-			Font = Enum.Font.GothamBlack,
-			TextColor3 = Color3.fromRGB(200, 200, 200),
-			TextXAlignment = Enum.TextXAlignment.Center,
-			Parent = parent
-		})
-		
-		-- Update footer position to always be below the window
-		local updateFooterPosition = function()
-			footerText.Position = UDim2.new(0, 20 + (250 * (parentTable.position or 0)), 0, 20 + parentTable.main.AbsoluteSize.Y)
-		end
-		
-		parentTable.main:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateFooterPosition)
-		updateFooterPosition()
 	end
 	
 	closeHolder.InputBegan:Connect(function(input)
@@ -142,6 +121,32 @@ local function createOptionHolder(holderTitle, parent, parentTable, subHolder)
 				tweenService:Create(title, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = parentTable.open and Color3.fromRGB(16, 16, 16) or Color3.fromRGB(10, 10, 10)}):Play()
 			end
 			parentTable.main:TweenSize(#parentTable.options > 0 and parentTable.open and UDim2.new(0, 230, 0, layout.AbsoluteContentSize.Y + size) or UDim2.new(0, 230, 0, size), "Out", "Quad", 0.2, true)
+		end
+	end)
+	
+	title.InputBegan:Connect(function(input)
+		if (input.UserInputType == ui or input.UserInputType == Enum.UserInputType.Touch) and not dragging then
+			-- Check if click is within the arrow/closeHolder area
+			local closeHolderAbsPos = closeHolder.AbsolutePosition
+			local closeHolderAbsSize = closeHolder.AbsoluteSize
+			local inputX = input.Position.X
+			
+			-- Only start dragging if click is NOT on the arrow button
+			local isInCloseHolder = inputX >= closeHolderAbsPos.X and inputX <= closeHolderAbsPos.X + closeHolderAbsSize.X
+			
+			if not isInCloseHolder then
+				dragging = true
+				dragInput = input
+				dragStart = input.Position
+				startPos = parentTable.main.Position
+				dragObject = parentTable.main
+			end
+		end
+	end)
+	
+	title.InputEnded:Connect(function(input)
+		if input.UserInputType == ui or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = false
 		end
 	end)
 
